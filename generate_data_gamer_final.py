@@ -1,3 +1,4 @@
+import json
 import random
 import unicodedata
 import pandas as pd
@@ -7,6 +8,7 @@ from faker import Faker
 fake = Faker('vi_VN')
 
 # --- CONFIG ---
+## Danh sách game và ngày ra mắt (giả sử) để tạo logic chơi và nạp tiền
 GAMES = {
     "Cửu Long Tranh Bá": {"launch": datetime(2024, 5, 1)},
     "Hiệp Khách Vô Song": {"launch": datetime(2024, 10, 1)},
@@ -14,14 +16,83 @@ GAMES = {
     "Thanh Vân Kiếm": {"launch": datetime(2025, 8, 1)},
     "Tiên Kiếm Kỳ Hiệp": {"launch": datetime(2025, 11, 1)},
 }
+
+## Mốc VIP (tổng nạp) để phân loại người chơi theo VIP level, có thể điều chỉnh theo thực tế hoặc mong muốn
 VIP_MILESTONES = {i: v for i, v in zip(range(0, 16), [0, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000, 5000000, 10000000, 20000000, 50000000, 100000000, 200000000, 500000000])}
 
-# --- HELPERS ---
+## code province list for CCCD generation (same as in user data generation, can be reused)
+PROVINCES = [
+    {"code": "001", "name": "Hà Nội"},
+    {"code": "002", "name": "Hà Giang"},
+    {"code": "004", "name": "Cao Bằng"},
+    {"code": "006", "name": "Bắc Kạn"},
+    {"code": "008", "name": "Tuyên Quang"},
+    {"code": "010", "name": "Lào Cai"},
+    {"code": "011", "name": "Điện Biên"},
+    {"code": "012", "name": "Lai Châu"},
+    {"code": "014", "name": "Sơn La"},
+    {"code": "015", "name": "Yên Bái"},
+    {"code": "017", "name": "Hòa Bình"},
+    {"code": "019", "name": "Thái Nguyên"},
+    {"code": "020", "name": "Lạng Sơn"},
+    {"code": "022", "name": "Quảng Ninh"},
+    {"code": "024", "name": "Bắc Giang"},
+    {"code": "025", "name": "Phú Thọ"},
+    {"code": "026", "name": "Vĩnh Phúc"},
+    {"code": "027", "name": "Bắc Ninh"},
+    {"code": "030", "name": "Hải Dương"},
+    {"code": "031", "name": "Hải Phòng"},
+    {"code": "033", "name": "Hưng Yên"},
+    {"code": "034", "name": "Thái Bình"},
+    {"code": "035", "name": "Hà Nam"},
+    {"code": "036", "name": "Nam Định"},
+    {"code": "037", "name": "Ninh Bình"},
+    {"code": "038", "name": "Thanh Hóa"},
+    {"code": "040", "name": "Nghệ An"},
+    {"code": "042", "name": "Hà Tĩnh"},
+    {"code": "044", "name": "Quảng Bình"},
+    {"code": "045", "name": "Quảng Trị"},
+    {"code": "046", "name": "Thừa Thiên Huế"},
+    {"code": "048", "name": "Đà Nẵng"},
+    {"code": "049", "name": "Quảng Nam"},
+    {"code": "051", "name": "Quảng Ngãi"},
+    {"code": "052", "name": "Bình Định"},
+    {"code": "054", "name": "Phú Yên"},
+    {"code": "056", "name": "Khánh Hòa"},
+    {"code": "058", "name": "Ninh Thuận"},
+    {"code": "060", "name": "Bình Thuận"},
+    {"code": "062", "name": "Kon Tum"},
+    {"code": "064", "name": "Gia Lai"},
+    {"code": "066", "name": "Đắk Lắk"},
+    {"code": "067", "name": "Đắk Nông"},
+    {"code": "068", "name": "Lâm Đồng"},
+    {"code": "070", "name": "Bình Phước"},
+    {"code": "072", "name": "Tây Ninh"},
+    {"code": "074", "name": "Bình Dương"},
+    {"code": "075", "name": "Đồng Nai"},
+    {"code": "077", "name": "Bà Rịa - Vũng Tàu"},
+    {"code": "079", "name": "Hồ Chí Minh"},
+    {"code": "080", "name": "Long An"},
+    {"code": "082", "name": "Tiền Giang"},
+    {"code": "083", "name": "Bến Tre"},
+    {"code": "084", "name": "Trà Vinh"},
+    {"code": "086", "name": "Vĩnh Long"},
+    {"code": "087", "name": "Đồng Tháp"},
+    {"code": "089", "name": "An Giang"},
+    {"code": "091", "name": "Kiên Giang"},
+    {"code": "092", "name": "Cần Thơ"},
+    {"code": "093", "name": "Hậu Giang"},
+    {"code": "094", "name": "Sóc Trăng"},
+    {"code": "095", "name": "Bạc Liêu"},
+    {"code": "096", "name": "Cà Mau"}
+]
+
+# --- HÀM HỖ TRỢ ---
+## Xóa dấu tiếng Việt
 def remove_accents(text):
     return "".join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn').lower()
 
-## Generate random 1000 users with profiles clude : user_id, username, full_name, phone, email, job, address, cccd
-### generate date of birth
+## generate date of birth
 def generate_birth_date(min_age, max_age):
     """Tạo ngày sinh ngẫu nhiên trong khoảng tuổi cụ thể"""
     today = date.today()
@@ -37,69 +108,146 @@ def generate_birth_date(min_age, max_age):
     
     random_days = random.randrange(days_between)
     return start_date + timedelta(days=random_days)
-### generate email
+
+## Tạo username theo nhiều kiểu dựa trên tên và ngày sinh
+def generate_username_style(full_name, birth_date_obj):
+    name_no_accent = remove_accents(full_name)
+    parts = name_no_accent.split()
+    if len(parts) < 2: return name_no_accent + str(random.randint(10, 99))
+
+    firstname = parts[-1] 
+    initials = "".join([p[0] for p in parts])
+    d, m, y2, y4 = birth_date_obj.strftime("%d"), birth_date_obj.strftime("%m"), birth_date_obj.strftime("%y"), birth_date_obj.strftime("%Y")
+    
+    styles = [
+        f"{initials}{d}{m}{y2}", f"{initials}{firstname}{y2}", 
+        f"{firstname}{d}{m}", f"{parts[0]}{firstname}{y2}",
+        f"{initials}{y4}", f"{firstname}{random.randint(100, 999)}"
+    ]
+    return random.choice(styles)
+
+## generate email
 def generate_random_email(full_name):
-    """Tạo email ngẫu nhiên dựa trên tên hoặc nickname"""
+    """Tạo email hỗn hợp: Nickname, Random ký tự, hoặc biến thể Tên"""
     name_no_accent = remove_accents(full_name).replace(" ", "")
-    nicks = ['baby', 'langtu', 'boy', 'hacker', 'knight', 'shadow', 'kute', 'pro', 'abcxyz', 'phongba']
-    domains = ['gmail.com', 'yahoo.com', 'outlook.com', 'vnn.vn']
+    nicknames = ['baby', 'boy', 'girl', 'langtu', 'xinh', 'hacker', 'pro', 'knight', 'shadow', 'cool', 'warrior', 'titan', 'gladiator', 'viking', 'samurai', 'ninja', 'assassin', 'sniper', 'hunter', 'slayer', 'hero', 'legend', 'myth', 'phantom', 'ghost', 'spirit', 'demon', 'angel', 'king', 'queen', 'lord', 'prince', 'duke', 'marshal', 'boss,fire', 'ice', 'thunder', 'storm', 'wind', 'water', 'earth', 'lava', 'magma', 'frost', 'flame', 'blaze', 'flare', 'spark', 'bolt', 'void', 'dark', 'light', 'solar', 'lunar', 'star', 'galaxy', 'cosmos', 'nebula', 'nova', 'dragon', 'phoenix', 'wolf', 'tiger', 'lion', 'eagle', 'hawk', 'falcon', 'cobra', 'viper', 'shark', 'kraken', 'bear', 'panther', 'jaguar', 'raven', 'crow', 'owl', 'bat', 'spider,cyber', 'matrix', 'pixel', 'bit', 'code', 'glitch', 'error', 'system', 'logic', 'vector', 'alpha', 'beta', 'omega', 'delta', 'gamma', 'zeta', 'binary', 'data', 'bot', 'droid', 'silent', 'deadly', 'fast', 'slow', 'crazy', 'mad', 'wild', 'savage', 'brutal', 'toxic', 'noble', 'brave', 'loyal', 'hidden', 'mystic', 'magic', 'ancient', 'future', 'retro', 'urban', 'dark_knight', 'shadow_walker', 'ice_queen', 'fire_dragon', 'neon_hacker', 'iron_man', 'steel_fist', 'gold_leaf', 'silver_bullet', 'blue_ocean', 'red_blood', 'black_hole', 'white_star', 'green_forest', 'purple_haze', 'kiemthe', 'vlam', 'tlbb', 'game_thu', 'dai_ca', 'thieu_gia', 'cong_chua', 'be_yeu', 'ga_con', 'vit_bau', 'trum_cuoi', 'sat_thu', 'vo_song', 'thien_ha', 'doc_co', 'viper', 'zenith', 'apex', 'orbit', 'pulse', 'echo', 'rhythm', 'chaos', 'havoc', 'zen', 'karma', 'destiny', 'fate', 'doom', 'eternal', 'infinite', 'omega', 'prime', 'ultra', 'super', 'mega', 'hyper', 'turbo', 'sonic', 'flash', 'velocity', 'impact', 'shatter', 'crush', 'strike', 'edge', 'fury', 'wrath', 'rage', 'venom', 'stinger', 'claw', 'fang', 'blade', 'sword']
+
+    random_chars = "abcdefghijklmnopqrstuvwxyz"
+    domains = ['gmail.com', 'yahoo.com', 'outlook.com', 'fpt.edu.vn', 'vnn.vn']
     
-    mode = random.choice(['nick', 'name', 'rand'])
-    if mode == 'nick':
-        prefix = f"{random.choice(nicks)}{random.randint(10, 999)}"
-    elif mode == 'name':
-        prefix = f"{name_no_accent[:random.randint(4, 7)]}{random.randint(10, 999)}"
+    # Chọn ngẫu nhiên 1 trong 4 kiểu email
+    mode = random.choice(['nickname', 'random_str','fakename', 'name_variant'])
+    
+    if mode == 'nickname':
+        prefix = f"{random.choice(nicknames)}{random.randint(10, 9999)}"
+    elif mode == 'random_str':
+        prefix = f"{''.join(random.choices(random_chars, k=random.randint(4, 7)))}{random.randint(100, 999)}"
+    elif mode == 'fakename':
+        prefix = f"{fake.email().split('@')[0]}"
     else:
-        prefix = "".join(random.choices("abcdefghijklmnopqrstuvwxyz", k=5)) + str(random.randint(100, 999))
+        prefix = f"{name_no_accent[:random.randint(3, 6)]}{random.randint(10, 999)}"
+        
     return f"{prefix}@{random.choice(domains)}"
-# generate user profiles
-def generate_full_user_data(min_age, max_age):
-    today = date.today()
-    
-    # 1. Logic Ngày sinh
-    start_date = date(today.year - max_age, 1, 1)
-    end_date = date(today.year - min_age, today.month, today.day)
-    days_between = (end_date - start_date).days
-    birth_date_obj = start_date + timedelta(days=random.randrange(days_between))
-    
-    birth_date_str = birth_date_obj.strftime("%d/%m/%Y")
-    year_suffix = birth_date_obj.strftime("%y") # Lấy 2 số cuối năm sinh (ví dụ: 95)
 
-    # 2. Logic Số điện thoại Việt Nam (các đầu số phổ biến)
+## # generate sdt
+def generate_random_phone():
     prefixes = ['090', '091', '098', '032', '035', '070', '086']
-    phone = random.choice(prefixes) + str(random.randint(1000000, 9999999))
+    return random.choice(prefixes) + str(random.randint(1000000, 9999999))
 
-    # 3. Logic Số CCCD (Giả lập cấu trúc thực tế)
-    # Mã tỉnh (001-096), Giới tính (Nam: 0, 2, 4...; Nữ: 1, 3, 5...), Năm sinh, Số ngẫu nhiên
-    province_code = str(random.randint(1, 96)).zfill(3)
-    gender_code = random.choice(['0', '1']) # 0 cho Nam, 1 cho Nữ (thế kỷ 20)
-    cccd = f"{province_code}{gender_code}{year_suffix}{random.randint(100000, 999999)}"
+## Chọn ngẫu nhiên một tỉnh từ danh sách trên
+def get_random_province():
+    return random.choice(PROVINCES)
+## hàm generate gender
+def generate_gender():
+    return random.choice(['Male', 'Female'])
 
-    return {
-        "full_name": fake.name(),
-        "birthday": birth_date_str,
-        "gender": "Nam" if gender_code == '0' else "Nữ",
-        "cccd": cccd,
-        "phone": phone,
-        "email": fake.free_email(),
-        "address": fake.address().replace('\n', ', '),
-        "job": fake.job()
-    }
+## Sửa lại hàm CCCD: truyền trực tiếp province_code vào
+def generate_cccd(gender, province_code, birth_date_obj):
+    # Thế kỷ 20 (1900-1999): Nam 0, Nữ 1
+    # Thế kỷ 21 (2000-2099): Nam 2, Nữ 3
+    year_born = birth_date_obj.year
+    
+    if year_born < 2000:
+        g_code = '0' if gender == 'Male' else '1'
+    else:
+        g_code = '2' if gender == 'Male' else '3'
+        
+    year_suffix = birth_date_obj.strftime("%y")
+    random_suffix = str(random.randint(100000, 999999))
+    
+    return f"{province_code}{g_code}{year_suffix}{random_suffix}"
 
-def create_user_list(count, min_age, max_age):
-    return [generate_full_user_data(min_age, max_age) for _ in range(count)]
+## Tạo địa chỉ khớp với tỉnh
+def generate_address_by_province(province_name):
+    return f"{fake.street_address()}, {province_name}"
 
+# Thực thi tạo user data
+## Hàm hỗ trợ generate user data
+def create_final_user_list(total_count, numsday_at_create=730):
+    users = []
+    used_emails, used_phones, used_usernames, used_user_ids, used_cccds = set(), set(), set(), set(), set()
+    
+    # Định nghĩa nhóm tuổi: (min, max, trọng số %)
+    # Nhóm < 20 đổi thành 16-19
+    age_groups = [(16, 19, 10), (20, 25, 20), (26, 30, 40), (31, 35, 20), (36, 60, 10)]
+    groups = [(g[0], g[1]) for g in age_groups]
+    weights = [g[2] for g in age_groups]
+
+    while len(users) < total_count:
+        # 1. Smart ID (202 + 26 + 5 số)
+        user_id = f"20226{str(random.randint(0, 99999)).zfill(5)}"
+        if user_id in used_user_ids: continue
+
+        # 2. Tuổi & Ngày sinh
+        min_age, max_age = random.choices(groups, weights=weights, k=1)[0]
+        birth_date = generate_birth_date(min_age, max_age)
+        
+        # 3. Tên & Username & Email
+        gender = generate_gender() # Trả về 'Male' hoặc 'Female'
+        if gender == 'Male':
+            full_name = fake.name_male()
+        else:
+            full_name = fake.name_female()
+
+        username = generate_username_style(full_name, birth_date)
+        email = generate_random_email(full_name)
+        
+        # 4. Số điện thoại
+        phone = generate_random_phone()
+        # 5 address and cccd
+        province = get_random_province()
+        address = generate_address_by_province(province['name'])
+        cccd = generate_cccd(gender, province['code'], birth_date)
+        if (username in used_usernames) or (email in used_emails) or (phone in used_phones) or (cccd in used_cccds):
+            continue
+
+        users.append({
+            "user_id": user_id,
+            "username": username,
+            "full_name": full_name,
+            "birthday": birth_date.strftime("%Y-%m-%d"),
+            "gender": gender,
+            "age_group": f"{min_age}-{max_age}",
+            "phone": phone,
+            "email": email,
+            "address": address,
+            "job": fake.job(),
+            "cccd": cccd,
+            "created_at": (datetime.now() - timedelta(days=random.randint(0, numsday_at_create))).strftime("%Y-%m-%d %H:%M:%S")
+        })
+        
+        used_user_ids.add(user_id); used_usernames.add(username); used_emails.add(email); used_phones.add(phone); used_cccds.add(cccd)
+    
+    return users
+
+## Thực thi tạo user data
+data = create_final_user_list(1000)
+with open('users_game_ready.json', 'w', encoding='utf-8') as f:
+    json.dump(data, f, ensure_ascii=False, indent=4)
+
+    
 # --- THỰC THI ---
-quantity = 5
-min_a, max_a = 22, 35
-user_list = create_user_list(quantity, min_a, max_a)
 
-
-def generate_ign(full_name, server_id):
-    """Tạo tên nhân vật dựa trên tên thật và server"""
-    nicks = ['KiemThan', 'BaChu', 'DocCo', 'AcMa', 'ThienSu', 'LanhLung', 'VoSong']
-    name_part = remove_accents(full_name.split()[-1]).capitalize()
-    return f"{random.choice(nicks)}_{name_part}{server_id}"
 
 def generate_transactions_v2(total_amount, start_date, end_limit, user_id, game_name, server_name):
     txns = []
