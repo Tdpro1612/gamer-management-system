@@ -339,7 +339,7 @@ def generate_user_job():
 
 # Thực thi tạo user data
 ## Hàm hỗ trợ generate user data
-def create_final_user_list(total_count, numsday_at_create=730):
+def create_final_user_list(total_count,numsday_first=0, numsday_at_create=730):
     users = []
     used_emails, used_phones, used_usernames, used_user_ids, used_cccds = set(), set(), set(), set(), set()
     
@@ -387,7 +387,7 @@ def create_final_user_list(total_count, numsday_at_create=730):
             "job": "Sinh viên" if age < 23 else generate_user_job(), # Nhóm tuổi lớn hơn 30 sẽ có job là Sinh viên để phù hợp với thực tế (có thể điều chỉnh logic này nếu muốn)
             "cccd": cccd,
             # "created_at": (datetime.now() - timedelta(days=random.randint(0, numsday_at_create))).strftime("%Y-%m-%d %H:%M:%S")
-            "created_at": (datetime.now() - timedelta(days=random.randint(0, numsday_at_create))).strftime("%Y-%m-%d %H:%M:%S")
+            "created_at": (datetime.now() - timedelta(days=random.randint(numsday_first, numsday_at_create))).strftime("%Y-%m-%d %H:%M:%S")
         })
         
         used_user_ids.add(user_id); used_usernames.add(username); used_emails.add(email); used_phones.add(phone); used_cccds.add(cccd)
@@ -396,11 +396,52 @@ def create_final_user_list(total_count, numsday_at_create=730):
 
 ## Thực thi tạo user data
 number_of_gamer = 120000
+numsday_first, numsday_at_create = 0, 730 # Tạo dữ liệu người chơi trong vòng 2 năm trở lại đây
 print(f"🚀 Đang tạo dữ liệu người chơi game... {number_of_gamer} người chơi")
-data = create_final_user_list(number_of_gamer)
+data = create_final_user_list(number_of_gamer, numsday_first, numsday_at_create)
 print(f"hoàn thành việc tạo dữ liệu người chơi game... {len(data)} bản ghi")
 df = pd.DataFrame(data)
 df.to_csv('users_game_part2.csv', index=False, encoding='utf-8')    
 # with open('users_game_part1.json', 'w', encoding='utf-8') as f:
 #     json.dump(data, f, ensure_ascii=False, indent=4)
 
+# df_1 = pd.read_csv('users_game_part1.csv')
+# df_2 = pd.read_csv('users_game_part2.csv')
+
+# df = pd.concat([df_1, df_2], ignore_index=True)
+
+# print(f"Tên các cột: {df.columns.tolist()}")
+# print(f"Tổng số dòng: {len(df)}")
+
+# duplicate_ids = df['user_id'].duplicated().sum()
+# duplicate_usernames = df['username'].duplicated().sum()
+# duplicate_phones = df['phone'].duplicated().sum()
+# duplicate_emails = df['email'].duplicated().sum()
+# duplicate_cccd = df['cccd'].duplicated().sum()
+# print(f"Số lượng ID bị trùng: {duplicate_ids}")
+# print(f"Số lượng username bị trùng: {duplicate_usernames}")
+# print(f"Số lượng phone bị trùng: {duplicate_phones}")
+# print(f"Số lượng email bị trùng: {duplicate_emails}")
+# print(f"Số lượng cccd bị trùng: {duplicate_cccd}")
+
+# df_clean = df.drop_duplicates(subset=['username'], keep='first')
+
+# # 2. Xóa tiếp các dòng trùng phone hoặc email (nếu vẫn còn)
+# df_clean = df_clean.drop_duplicates(subset=['phone'], keep='first')
+# df_clean = df_clean.drop_duplicates(subset=['email'], keep='first')
+# df_clean = df_clean.drop_duplicates(subset=['cccd'], keep='first')
+# print(f"Số dòng sau khi làm sạch: {len(df_clean)}")
+# print(f"Số dòng đã bị loại bỏ: {len(df) - len(df_clean)}")
+
+# duplicate_ids = df_clean['user_id'].duplicated().sum()
+# duplicate_usernames = df_clean['username'].duplicated().sum()
+# duplicate_phones = df_clean['phone'].duplicated().sum()
+# duplicate_emails = df_clean['email'].duplicated().sum()
+# duplicate_cccd = df_clean['cccd'].duplicated().sum()
+# print(f"Số lượng ID bị trùng: {duplicate_ids}")
+# print(f"Số lượng username bị trùng: {duplicate_usernames}")
+# print(f"Số lượng phone bị trùng: {duplicate_phones}")
+# print(f"Số lượng email bị trùng: {duplicate_emails}")
+# print(f"Số lượng cccd bị trùng: {duplicate_cccd}")
+
+# df_clean.to_csv('users_game_clean.csv', index=False)
