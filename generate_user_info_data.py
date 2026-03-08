@@ -315,27 +315,45 @@ def generate_full_name(gender):
     return full_name
 
 ## Hàm hỗ trợ generate job cho người chơi game, có thể điều chỉnh danh sách và trọng số cho phù hợp với thực tế hơn
-def generate_user_job():
-    JOBS_LIST = [
-        "Sinh viên", "Nhân viên văn phòng", "Lập trình viên", "Kế toán", 
-        "Kinh doanh tự do", "Tài xế công nghệ", "Công nhân", "Giáo viên", 
-        "Kỹ sư", "Nhân viên bán hàng", "Marketing", "Thiết kế đồ họa", 
-        "Bác sĩ", "Luật sư", "Đầu bếp", "Dược sĩ", "Kiến trúc sư", 
-        "Nội trợ", "Quản lý cửa hàng", "Giao hàng (Shipper)", "Freelancer",
-        "Chuyên viên nhân sự", "Kỹ thuật viên", "Giao dịch viên", "Môi giới BĐS"
-    ]
+PROFESSIONAL_JOBS = [
+    "Nhân viên văn phòng", "Lập trình viên", "Kế toán", 
+    "Kinh doanh tự do", "Tài xế công nghệ", "Công nhân", "Giáo viên", 
+    "Kỹ sư", "Nhân viên bán hàng", "Marketing", "Thiết kế đồ họa", 
+    "Bác sĩ", "Luật sư", "Đầu bếp", "Dược sĩ", "Kiến trúc sư", 
+    "Nội trợ", "Quản lý cửa hàng", "Giao hàng (Shipper)", "Freelancer",
+    "Chuyên viên nhân sự", "Kỹ thuật viên", "Giao dịch viên", "Môi giới BĐS"
+]
 
-    # Nếu muốn gán trọng số cho thực tế hơn:
-    JOB_WEIGHTS = [
-        20, 15, 8, 5,  # Sinh viên (20%), Văn phòng (15%)...
-        10, 8, 7, 4,   # Tự do (10%), Tài xế (8%)...
-        3, 5, 4, 2, 
-        1, 1, 1, 1, 1, # Các nhóm chuyên gia để 1%
-        1, 1, 1, 1,
-        0.5, 0.5, 0.5, 0.5 # Các nhóm hiếm để 0.5%
-    ]
-    job = random.choices(JOBS_LIST, weights=JOB_WEIGHTS, k=1)[0]
-    return job
+JOB_WEIGHTS = [
+    15,   # Nhân viên văn phòng
+    8,    # Lập trình viên
+    6,    # Kế toán
+    12,   # Kinh doanh tự do
+    8,    # Tài xế công nghệ
+    7,    # Công nhân
+    4,    # Giáo viên
+    5,    # Kỹ sư
+    10,   # Nhân viên bán hàng
+    4,    # Marketing
+    3,    # Thiết kế đồ họa
+    1.5,  # Bác sĩ
+    1,    # Luật sư
+    3,    # Đầu bếp
+    1,    # Dược sĩ
+    1,    # Kiến trúc sư
+    2,    # Nội trợ
+    2,    # Quản lý cửa hàng
+    5,    # Giao hàng (Shipper)
+    2,    # Freelancer
+    1,    # Chuyên viên nhân sự
+    1,    # Kỹ thuật viên
+    0.5,  # Giao dịch viên
+    1     # Môi giới BĐS
+]
+def generate_user_job(is_student=False):
+    if is_student:
+        return "Sinh viên"
+    return random.choice(PROFESSIONAL_JOBS)
 
 # Thực thi tạo user data
 ## Hàm hỗ trợ generate user data
@@ -372,7 +390,6 @@ def create_final_user_list(total_count,numsday_first=0, numsday_at_create=730):
         cccd = generate_cccd(gender, province['code'], birth_date)
         if (username in used_usernames) or (email in used_emails) or (phone in used_phones) or (cccd in used_cccds):
             continue
-
         users.append({
             "user_id": user_id,
             "username": username,
@@ -384,7 +401,7 @@ def create_final_user_list(total_count,numsday_first=0, numsday_at_create=730):
             "phone": phone,
             "email": email,
             "address": address,
-            "job": "Sinh viên" if age < 23 else generate_user_job(), # Nhóm tuổi lớn hơn 30 sẽ có job là Sinh viên để phù hợp với thực tế (có thể điều chỉnh logic này nếu muốn)
+            "job": generate_user_job(is_student=(age <= 22)), # Giả định <=22 tuổi là sinh viên
             "cccd": cccd,
             # "created_at": (datetime.now() - timedelta(days=random.randint(0, numsday_at_create))).strftime("%Y-%m-%d %H:%M:%S")
             "created_at": (datetime.now() - timedelta(days=random.randint(numsday_first, numsday_at_create))).strftime("%Y-%m-%d %H:%M:%S")
@@ -395,53 +412,72 @@ def create_final_user_list(total_count,numsday_first=0, numsday_at_create=730):
     return users
 
 ## Thực thi tạo user data
-number_of_gamer = 120000
-numsday_first, numsday_at_create = 0, 730 # Tạo dữ liệu người chơi trong vòng 2 năm trở lại đây
-print(f"🚀 Đang tạo dữ liệu người chơi game... {number_of_gamer} người chơi")
-data = create_final_user_list(number_of_gamer, numsday_first, numsday_at_create)
-print(f"hoàn thành việc tạo dữ liệu người chơi game... {len(data)} bản ghi")
-df = pd.DataFrame(data)
-df.to_csv('users_game_part2.csv', index=False, encoding='utf-8')    
+# number_of_gamer = 120000
+# numsday_first, numsday_at_create = 0, 730 # Tạo dữ liệu người chơi trong vòng 2 năm trở lại đây
+# name_file_save = 'users_game_part2.csv'
+# print(f"🚀 Đang tạo dữ liệu người chơi game... {number_of_gamer} người chơi")
+# data = create_final_user_list(number_of_gamer, numsday_first, numsday_at_create)
+# print(f"hoàn thành việc tạo dữ liệu người chơi game...{name_file_save} có {len(data)} bản ghi")
+# df = pd.DataFrame(data)
+# df['phone'] = df['phone'].astype(str)
+# df['cccd'] = df['cccd'].astype(str)
+# print(df.dtypes)
+# df.to_csv(name_file_save, index=False, encoding='utf-8')
 # with open('users_game_part1.json', 'w', encoding='utf-8') as f:
 #     json.dump(data, f, ensure_ascii=False, indent=4)
 
-# df_1 = pd.read_csv('users_game_part1.csv')
-# df_2 = pd.read_csv('users_game_part2.csv')
 
-# df = pd.concat([df_1, df_2], ignore_index=True)
+columns_to_fix = {
+    'user_id': str,
+    'phone': str,
+    'cccd': str
+}
+df_1 = pd.read_csv('users_game_part1.csv', dtype=columns_to_fix)
+df_2 = pd.read_csv('users_game_part2.csv', dtype=columns_to_fix)
+df = pd.concat([df_1, df_2], ignore_index=True)
 
-# print(f"Tên các cột: {df.columns.tolist()}")
-# print(f"Tổng số dòng: {len(df)}")
+print(f"Tên các cột: {df.columns.tolist()}")
+print(f"Tổng số dòng: {len(df)}")
 
-# duplicate_ids = df['user_id'].duplicated().sum()
-# duplicate_usernames = df['username'].duplicated().sum()
-# duplicate_phones = df['phone'].duplicated().sum()
-# duplicate_emails = df['email'].duplicated().sum()
-# duplicate_cccd = df['cccd'].duplicated().sum()
-# print(f"Số lượng ID bị trùng: {duplicate_ids}")
-# print(f"Số lượng username bị trùng: {duplicate_usernames}")
-# print(f"Số lượng phone bị trùng: {duplicate_phones}")
-# print(f"Số lượng email bị trùng: {duplicate_emails}")
-# print(f"Số lượng cccd bị trùng: {duplicate_cccd}")
+duplicate_ids = df['user_id'].duplicated().sum()
+duplicate_usernames = df['username'].duplicated().sum()
+duplicate_phones = df['phone'].duplicated().sum()
+duplicate_emails = df['email'].duplicated().sum()
+duplicate_cccd = df['cccd'].duplicated().sum()
+print(f"Số lượng ID bị trùng: {duplicate_ids}")
+print(f"Số lượng username bị trùng: {duplicate_usernames}")
+print(f"Số lượng phone bị trùng: {duplicate_phones}")
+print(f"Số lượng email bị trùng: {duplicate_emails}")
+print(f"Số lượng cccd bị trùng: {duplicate_cccd}")
 
-# df_clean = df.drop_duplicates(subset=['username'], keep='first')
+# Xóa trùng ID trước
+df_clean = df.drop_duplicates(subset=['user_id'], keep='first')
+# Sau đó lấy kết quả đó xóa tiếp trùng Username
+df_clean = df_clean.drop_duplicates(subset=['username'], keep='first')
+# Tiếp tục với Phone
+df_clean = df_clean.drop_duplicates(subset=['phone'], keep='first')
+# Tiếp tục với Email
+df_clean = df_clean.drop_duplicates(subset=['email'], keep='first')
+# Cuối cùng là CCCD
+df_clean = df_clean.drop_duplicates(subset=['cccd'], keep='first')
 
-# # 2. Xóa tiếp các dòng trùng phone hoặc email (nếu vẫn còn)
-# df_clean = df_clean.drop_duplicates(subset=['phone'], keep='first')
-# df_clean = df_clean.drop_duplicates(subset=['email'], keep='first')
-# df_clean = df_clean.drop_duplicates(subset=['cccd'], keep='first')
-# print(f"Số dòng sau khi làm sạch: {len(df_clean)}")
-# print(f"Số dòng đã bị loại bỏ: {len(df) - len(df_clean)}")
+print(f"Số dòng sau khi làm sạch: {len(df_clean)}")
+print(f"Số dòng đã bị loại bỏ: {len(df) - len(df_clean)}")
 
-# duplicate_ids = df_clean['user_id'].duplicated().sum()
-# duplicate_usernames = df_clean['username'].duplicated().sum()
-# duplicate_phones = df_clean['phone'].duplicated().sum()
-# duplicate_emails = df_clean['email'].duplicated().sum()
-# duplicate_cccd = df_clean['cccd'].duplicated().sum()
-# print(f"Số lượng ID bị trùng: {duplicate_ids}")
-# print(f"Số lượng username bị trùng: {duplicate_usernames}")
-# print(f"Số lượng phone bị trùng: {duplicate_phones}")
-# print(f"Số lượng email bị trùng: {duplicate_emails}")
-# print(f"Số lượng cccd bị trùng: {duplicate_cccd}")
-
-# df_clean.to_csv('users_game_clean.csv', index=False)
+duplicate_ids = df_clean['user_id'].duplicated().sum()
+duplicate_usernames = df_clean['username'].duplicated().sum()
+duplicate_phones = df_clean['phone'].duplicated().sum()
+duplicate_emails = df_clean['email'].duplicated().sum()
+duplicate_cccd = df_clean['cccd'].duplicated().sum()
+print(f"Số lượng ID bị trùng: {duplicate_ids}")
+print(f"Số lượng username bị trùng: {duplicate_usernames}")
+print(f"Số lượng phone bị trùng: {duplicate_phones}")
+print(f"Số lượng email bị trùng: {duplicate_emails}")
+print(f"Số lượng cccd bị trùng: {duplicate_cccd}")
+df_clean['phone'] = df_clean['phone'].astype(str).str.zfill(10)
+df_clean['cccd'] = df_clean['cccd'].astype(str).str.zfill(12)
+df_clean.to_csv('users_game_clean.csv', index=False)
+df_indexed = df_clean.set_index('user_id')
+user_dict_dict = df_indexed.to_dict(orient='index')
+with open("user_info.json", "w", encoding="utf-8") as file:
+    json.dump(user_dict_dict, file, ensure_ascii=False, indent=4)
