@@ -16,26 +16,29 @@ sorted_game_names = sorted(game_names_list, key=lambda x: GAMES[x]["launch"])
 
 current_date = datetime.now()
 weights_choice_games = []
-
+game_count_options = [1, 2, 3, 4, 5]
+game_count_weights = [80, 15, 4, 0.8, 0.2]
 for game_info in GAMES.values():
     launch_date = game_info["launch"]
-    # Tính số tháng hoạt động, tối thiểu là 1
     months_active = (current_date.year - launch_date.year) * 12 + (current_date.month - launch_date.month)
-    weights_choice_games.append(max(1, months_active) ** 2)
+    
+    # Dùng Linear (tuyến tính) + Base weight là 5 để game mới vẫn có user
+    weight = max(1, months_active) + 5 
+    weights_choice_games.append(weight)
 
 def assign_game():
     """Hàm thuần túy, chạy nhanh hơn gọi qua Class"""
     return random.choice(list(GAMES.keys()))
 
 # Đọc dữ liệu user info data
-with open("user_info.json", "r", encoding="utf-8") as file:
+with open("data/user_info.json", "r", encoding="utf-8") as file:
     user_info = json.load(file)
 
 print(f"Đã đọc dữ liệu người dùng, tổng số user: {len(user_info)}. Bắt đầu phân bổ dữ liệu user vào các game...")
 game_data = {}
 for user in user_info:
     # Bốc số lượng game mà user sẽ chơi, tối đa là 5 game, nhưng không được vượt quá số lượng game hiện có
-    nums_games = random.randint(1, 5)
+    nums_games = random.choices(game_count_options, weights=game_count_weights, k=1)[0]
     nums_games = min(nums_games, len(game_names_list))
     
     # Sử dụng tập hợp để tránh trùng lặp khi bốc bằng choices
@@ -49,10 +52,10 @@ for user in user_info:
     for game in selected_games:
         if game not in game_data:
             game_data[game] = []
-        game_data[game].append(user["user_id"])
+        game_data[game].append(user)
 
 # Lưu dữ liệu game vào file JSON
-with open("game_database.json", "w", encoding="utf-8") as file:
+with open("data/game_database.json", "w", encoding="utf-8") as file:
     json.dump(game_data, file, ensure_ascii=False, indent=4)
 
 
