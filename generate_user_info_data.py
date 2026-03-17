@@ -404,7 +404,7 @@ def create_final_user_list(total_count,numsday_first=0, numsday_at_create=730):
             "job": generate_user_job(is_student=(age <= 22)), # Giả định <=22 tuổi là sinh viên
             "cccd": cccd,
             # "created_at": (datetime.now() - timedelta(days=random.randint(0, numsday_at_create))).strftime("%Y-%m-%d %H:%M:%S")
-            "created_at": (datetime.now() - timedelta(days=random.randint(numsday_first, numsday_at_create))).strftime("%Y-%m-%d %H:%M:%S")
+            "created_at": (datetime.now() - timedelta(days=random.randint(numsday_first, numsday_at_create))).strftime("%Y-%m-%d")
         })
         
         used_user_ids.add(user_id); used_usernames.add(username); used_emails.add(email); used_phones.add(phone); used_cccds.add(cccd)
@@ -412,8 +412,8 @@ def create_final_user_list(total_count,numsday_first=0, numsday_at_create=730):
     return users
 
 ## Thực thi tạo user data
-# number_of_gamer = 120000
-# numsday_first, numsday_at_create = 0, 730 # Tạo dữ liệu người chơi trong vòng 2 năm trở lại đây
+# number_of_gamer = 100000
+# numsday_first, numsday_at_create = 20, 730 # Tạo dữ liệu người chơi trong vòng 2 năm trở lại đây
 # name_file_save = 'users_game_part2.csv'
 # print(f"🚀 Đang tạo dữ liệu người chơi game... {number_of_gamer} người chơi")
 # data = create_final_user_list(number_of_gamer, numsday_first, numsday_at_create)
@@ -423,7 +423,7 @@ def create_final_user_list(total_count,numsday_first=0, numsday_at_create=730):
 # df['cccd'] = df['cccd'].astype(str)
 # print(df.dtypes)
 # df.to_csv(name_file_save, index=False, encoding='utf-8')
-# with open('users_game_part1.json', 'w', encoding='utf-8') as f:
+# with open('users_game_part2.json', 'w', encoding='utf-8') as f:
 #     json.dump(data, f, ensure_ascii=False, indent=4)
 
 
@@ -476,8 +476,8 @@ print(f"Số lượng email bị trùng: {duplicate_emails}")
 print(f"Số lượng cccd bị trùng: {duplicate_cccd}")
 df_clean['phone'] = df_clean['phone'].astype(str).str.zfill(10)
 df_clean['cccd'] = df_clean['cccd'].astype(str).str.zfill(12)
-df_clean.to_csv('users_game_clean.csv', index=False)
+df_clean.to_csv('data/users_game_clean.csv', index=False)
 df_indexed = df_clean.set_index('user_id')
 user_dict_dict = df_indexed.to_dict(orient='index')
-with open("user_info.json", "w", encoding="utf-8") as file:
+with open("data/user_info.json", "w", encoding="utf-8") as file:
     json.dump(user_dict_dict, file, ensure_ascii=False, indent=4)
