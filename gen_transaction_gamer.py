@@ -32,7 +32,7 @@ def calculate_paid_amount(original_amount, channel):
         return original_amount # In-app thường không chiết khấu
     
     # Logic chiết khấu theo yêu cầu của bạn
-    else:
+    if channel in ["Banking", "Momo"]:
         discount = 0.15 if original_amount >= 500000 else 0.1
         return int(original_amount * (1 - discount))
 
@@ -60,6 +60,7 @@ def get_random_time_in_day(base_date):
 
 def create_bill_dict(uid, g_name, ingame_name, server_id, vip_level, pkg, bill_ts, count):
     """Hàm tạo bản ghi Bill để code chính gọn gàng hơn"""
+    channel = random.choice(CHANNELS)
     return {
         'bill_id': f"B{uid}{int(bill_ts.timestamp())}{count}",
         'user_id': uid,
@@ -68,8 +69,8 @@ def create_bill_dict(uid, g_name, ingame_name, server_id, vip_level, pkg, bill_t
         'game_name': g_name,
         'server_id': server_id,
         'original_amount': pkg,
-        'paid_amount': calculate_paid_amount(pkg, random.choice(CHANNELS)),
-        'channel': random.choice(CHANNELS),
+        'paid_amount': calculate_paid_amount(pkg, channel),
+        'channel': channel,
         'created_at': bill_ts.strftime('%Y-%m-%d %H:%M:%S')
     }
 
