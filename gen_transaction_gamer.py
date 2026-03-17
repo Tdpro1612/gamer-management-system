@@ -32,8 +32,9 @@ def calculate_paid_amount(original_amount, channel):
         return original_amount # In-app thường không chiết khấu
     
     # Logic chiết khấu theo yêu cầu của bạn
-    discount = 0.15 if original_amount >= 500000 else 0.1
-    return int(original_amount * (1 - discount))
+    else:
+        discount = 0.15 if original_amount >= 500000 else 0.1
+        return int(original_amount * (1 - discount))
 
 def get_random_time_in_day(base_date):
     """
