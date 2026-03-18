@@ -427,57 +427,57 @@ def create_final_user_list(total_count,numsday_first=0, numsday_at_create=730):
 #     json.dump(data, f, ensure_ascii=False, indent=4)
 
 
-columns_to_fix = {
-    'user_id': str,
-    'phone': str,
-    'cccd': str
-}
-df_1 = pd.read_csv('users_game_part1.csv', dtype=columns_to_fix)
-df_2 = pd.read_csv('users_game_part2.csv', dtype=columns_to_fix)
-df = pd.concat([df_1, df_2], ignore_index=True)
+# columns_to_fix = {
+#     'user_id': str,
+#     'phone': str,
+#     'cccd': str
+# }
+# df_1 = pd.read_csv('users_game_part1.csv', dtype=columns_to_fix)
+# df_2 = pd.read_csv('users_game_part2.csv', dtype=columns_to_fix)
+# df = pd.concat([df_1, df_2], ignore_index=True)
 
-print(f"Tên các cột: {df.columns.tolist()}")
-print(f"Tổng số dòng: {len(df)}")
+# print(f"Tên các cột: {df.columns.tolist()}")
+# print(f"Tổng số dòng: {len(df)}")
 
-duplicate_ids = df['user_id'].duplicated().sum()
-duplicate_usernames = df['username'].duplicated().sum()
-duplicate_phones = df['phone'].duplicated().sum()
-duplicate_emails = df['email'].duplicated().sum()
-duplicate_cccd = df['cccd'].duplicated().sum()
-print(f"Số lượng ID bị trùng: {duplicate_ids}")
-print(f"Số lượng username bị trùng: {duplicate_usernames}")
-print(f"Số lượng phone bị trùng: {duplicate_phones}")
-print(f"Số lượng email bị trùng: {duplicate_emails}")
-print(f"Số lượng cccd bị trùng: {duplicate_cccd}")
+# duplicate_ids = df['user_id'].duplicated().sum()
+# duplicate_usernames = df['username'].duplicated().sum()
+# duplicate_phones = df['phone'].duplicated().sum()
+# duplicate_emails = df['email'].duplicated().sum()
+# duplicate_cccd = df['cccd'].duplicated().sum()
+# print(f"Số lượng ID bị trùng: {duplicate_ids}")
+# print(f"Số lượng username bị trùng: {duplicate_usernames}")
+# print(f"Số lượng phone bị trùng: {duplicate_phones}")
+# print(f"Số lượng email bị trùng: {duplicate_emails}")
+# print(f"Số lượng cccd bị trùng: {duplicate_cccd}")
 
-# Xóa trùng ID trước
-df_clean = df.drop_duplicates(subset=['user_id'], keep='first')
-# Sau đó lấy kết quả đó xóa tiếp trùng Username
-df_clean = df_clean.drop_duplicates(subset=['username'], keep='first')
-# Tiếp tục với Phone
-df_clean = df_clean.drop_duplicates(subset=['phone'], keep='first')
-# Tiếp tục với Email
-df_clean = df_clean.drop_duplicates(subset=['email'], keep='first')
-# Cuối cùng là CCCD
-df_clean = df_clean.drop_duplicates(subset=['cccd'], keep='first')
+# # Xóa trùng ID trước
+# df_clean = df.drop_duplicates(subset=['user_id'], keep='first')
+# # Sau đó lấy kết quả đó xóa tiếp trùng Username
+# df_clean = df_clean.drop_duplicates(subset=['username'], keep='first')
+# # Tiếp tục với Phone
+# df_clean = df_clean.drop_duplicates(subset=['phone'], keep='first')
+# # Tiếp tục với Email
+# df_clean = df_clean.drop_duplicates(subset=['email'], keep='first')
+# # Cuối cùng là CCCD
+# df_clean = df_clean.drop_duplicates(subset=['cccd'], keep='first')
 
-print(f"Số dòng sau khi làm sạch: {len(df_clean)}")
-print(f"Số dòng đã bị loại bỏ: {len(df) - len(df_clean)}")
+# print(f"Số dòng sau khi làm sạch: {len(df_clean)}")
+# print(f"Số dòng đã bị loại bỏ: {len(df) - len(df_clean)}")
 
-duplicate_ids = df_clean['user_id'].duplicated().sum()
-duplicate_usernames = df_clean['username'].duplicated().sum()
-duplicate_phones = df_clean['phone'].duplicated().sum()
-duplicate_emails = df_clean['email'].duplicated().sum()
-duplicate_cccd = df_clean['cccd'].duplicated().sum()
-print(f"Số lượng ID bị trùng: {duplicate_ids}")
-print(f"Số lượng username bị trùng: {duplicate_usernames}")
-print(f"Số lượng phone bị trùng: {duplicate_phones}")
-print(f"Số lượng email bị trùng: {duplicate_emails}")
-print(f"Số lượng cccd bị trùng: {duplicate_cccd}")
-df_clean['phone'] = df_clean['phone'].astype(str).str.zfill(10)
-df_clean['cccd'] = df_clean['cccd'].astype(str).str.zfill(12)
-df_clean.to_csv('data/users_game_clean.csv', index=False)
-df_indexed = df_clean.set_index('user_id')
-user_dict_dict = df_indexed.to_dict(orient='index')
-with open("data/user_info.json", "w", encoding="utf-8") as file:
-    json.dump(user_dict_dict, file, ensure_ascii=False, indent=4)
+# duplicate_ids = df_clean['user_id'].duplicated().sum()
+# duplicate_usernames = df_clean['username'].duplicated().sum()
+# duplicate_phones = df_clean['phone'].duplicated().sum()
+# duplicate_emails = df_clean['email'].duplicated().sum()
+# duplicate_cccd = df_clean['cccd'].duplicated().sum()
+# print(f"Số lượng ID bị trùng: {duplicate_ids}")
+# print(f"Số lượng username bị trùng: {duplicate_usernames}")
+# print(f"Số lượng phone bị trùng: {duplicate_phones}")
+# print(f"Số lượng email bị trùng: {duplicate_emails}")
+# print(f"Số lượng cccd bị trùng: {duplicate_cccd}")
+# df_clean['phone'] = df_clean['phone'].astype(str).str.zfill(10)
+# df_clean['cccd'] = df_clean['cccd'].astype(str).str.zfill(12)
+# df_clean.to_csv('data/users_game_clean.csv', index=False)
+# df_indexed = df_clean.set_index('user_id')
+# user_dict_dict = df_indexed.to_dict(orient='index')
+# with open("data/user_info.json", "w", encoding="utf-8") as file:
+#     json.dump(user_dict_dict, file, ensure_ascii=False, indent=4)

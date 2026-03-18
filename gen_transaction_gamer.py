@@ -174,86 +174,86 @@ def generate_bills_for_user(uid, g_name, ingame_name, server_id, vip_level, star
 record_bill = []
 batch_size = 10000
 
-df = pd.read_csv("data/game_data_final.csv")
-print(f">>> Đã tải dữ liệu gốc với {df['vip_level'].value_counts()} bản ghi.")
-print(f">>> Tìm thấy {len(df)} users ...")
-output_file = "data/transaction_gamer.csv"
+# df = pd.read_csv("data/game_data_final.csv")
+# print(f">>> Đã tải dữ liệu gốc với {df['vip_level'].value_counts()} bản ghi.")
+# print(f">>> Tìm thấy {len(df)} users ...")
+# output_file = "data/transaction_gamer.csv"
 
 
-# print(">>> Đang phân cụm User...")
-df_reccheck_vip = df[df['vip_level'] > 0]
-print(f">>> Đã lọc được {len(df_reccheck_vip)} users có VIP level > 0. Bắt đầu phân cụm...")
-df_sorted = df_reccheck_vip.sort_values(['user_id', 'join_date'])
-user_groups = dict(list(df_sorted.groupby('user_id')))
-all_uids = list(user_groups.keys())
+# # print(">>> Đang phân cụm User...")
+# df_reccheck_vip = df[df['vip_level'] > 0]
+# print(f">>> Đã lọc được {len(df_reccheck_vip)} users có VIP level > 0. Bắt đầu phân cụm...")
+# df_sorted = df_reccheck_vip.sort_values(['user_id', 'join_date'])
+# user_groups = dict(list(df_sorted.groupby('user_id')))
+# all_uids = list(user_groups.keys())
 
-print(f">>> Tìm thấy {len(all_uids)} users duy nhất. Bắt đầu sinh Bill...")
-idx = 0
-for uid in all_uids:
-    idx += 1
-    user_df = user_groups.get(uid)
-    user_bills = []
-    for g_name, game_group in user_df.groupby('game_name'):
-        records = game_group.to_dict('records')
-        num_records = len(records)
+# print(f">>> Tìm thấy {len(all_uids)} users duy nhất. Bắt đầu sinh Bill...")
+# idx = 0
+# for uid in all_uids:
+#     idx += 1
+#     user_df = user_groups.get(uid)
+#     user_bills = []
+#     for g_name, game_group in user_df.groupby('game_name'):
+#         records = game_group.to_dict('records')
+#         num_records = len(records)
         
-        for i in range(num_records):
-            row = records[i]
-            vip_level = row['vip_level']
+#         for i in range(num_records):
+#             row = records[i]
+#             vip_level = row['vip_level']
             
-            if vip_level == 0:
-                continue
+#             if vip_level == 0:
+#                 continue
                 
-            # Lấy thông tin cơ bản
-            ingame_name = row['ingame_name']
-            server_id = row['server_id']
+#             # Lấy thông tin cơ bản
+#             ingame_name = row['ingame_name']
+#             server_id = row['server_id']
             
-            # Xử lý ngày tháng
-            start_date = pd.to_datetime(row['join_date'])
+#             # Xử lý ngày tháng
+#             start_date = pd.to_datetime(row['join_date'])
             
-            if i + 1 < num_records:
-                # Nếu có server tiếp theo trong cùng game
-                end_date = pd.to_datetime(records[i+1]['join_date'])
-            else:
-                # Nếu là server cuối cùng của game đó
-                end_date = datetime.now()
+#             if i + 1 < num_records:
+#                 # Nếu có server tiếp theo trong cùng game
+#                 end_date = pd.to_datetime(records[i+1]['join_date'])
+#             else:
+#                 # Nếu là server cuối cùng của game đó
+#                 end_date = datetime.now()
             
-            # Sinh bill và thêm vào danh sách
-            bill_total = generate_bills_for_user(uid, g_name, ingame_name, server_id, vip_level, start_date, end_date)
-            user_bills.extend(bill_total)
-    record_bill.extend(user_bills)
-    if (idx) % batch_size == 0 or (idx) == len(all_uids):
-        if record_bill:
-            # Chuyển list các dict thành DataFrame
-            print(f">>> Số lượng bill là {len(record_bill)}")
-            df_batch = pd.DataFrame(record_bill)
-            # Ghi nối (append) vào file đã tạo
-            df_batch.to_csv(output_file, mode='a', index=False, header=False)
+#             # Sinh bill và thêm vào danh sách
+#             bill_total = generate_bills_for_user(uid, g_name, ingame_name, server_id, vip_level, start_date, end_date)
+#             user_bills.extend(bill_total)
+#     record_bill.extend(user_bills)
+#     if (idx) % batch_size == 0 or (idx) == len(all_uids):
+#         if record_bill:
+#             # Chuyển list các dict thành DataFrame
+#             print(f">>> Số lượng bill là {len(record_bill)}")
+#             df_batch = pd.DataFrame(record_bill)
+#             # Ghi nối (append) vào file đã tạo
+#             df_batch.to_csv(output_file, mode='a', index=False, header=False)
             
-            # Xóa list tạm để giải phóng bộ nhớ
-            record_bill = []
-            print(f">>> Đã ghi xong {idx}/{len(all_uids)} users...")
+#             # Xóa list tạm để giải phóng bộ nhớ
+#             record_bill = []
+#             print(f">>> Đã ghi xong {idx}/{len(all_uids)} users...")
             
 
-print(f">>> Hoàn tất! Dữ liệu đã được lưu tại {output_file}")
+# print(f">>> Hoàn tất! Dữ liệu đã được lưu tại {output_file}")
 
-df = pd.read_csv("data/transaction_gamer.csv")
-df.columns = ['bill_id', 'user_id', 'vip_level', 'ingame_name', 'game_name', 'server_id', 'original_amount', 'paid_amount', 'channel', 'created_at']
-df.to_csv("data/transaction_gamer.csv", index=False)
-# Xem nhanh dữ liệu và thông tin bộ nhớ
-print(">>> Cấu trúc dữ liệu:")
-print(df.info()) 
-print("\n>>> 5 dòng đầu tiên:")
-print(df.head())
-# Đếm số lượng bill và tổng tiền theo từng Persona
-persona_stats = df.groupby('vip_level').agg(
-    total_bills=('bill_id', 'count'),          # Đếm số lượng bill
-    unique_users=('user_id', 'nunique'),       # Đếm số user duy nhất
-    total_revenue=('paid_amount', 'sum')       # Tổng tiền thực thu
-).sort_values(by='total_revenue', ascending=False)
+# df = pd.read_csv("data/transaction_gamer.csv")
+# df.columns = ['bill_id', 'user_id', 'vip_level', 'ingame_name', 'game_name', 'server_id', 'original_amount', 'paid_amount', 'channel', 'created_at']
+# df.to_csv("data/transaction_gamer.csv", index=False)
+# # Xem nhanh dữ liệu và thông tin bộ nhớ
+# print(">>> Cấu trúc dữ liệu:")
+# print(df.info()) 
+# print("\n>>> 5 dòng đầu tiên:")
+# print(df.head())
+# # Đếm số lượng bill và tổng tiền theo từng Persona
+# persona_stats = df.groupby('vip_level').agg(
+#     total_bills=('bill_id', 'count'),          # Đếm số lượng bill
+#     unique_users=('user_id', 'nunique'),       # Đếm số user duy nhất
+#     total_revenue=('paid_amount', 'sum')       # Tổng tiền thực thu
+# ).sort_values(by='total_revenue', ascending=False)
 
-# Tính trung bình mỗi người nạp bao nhiêu lần
-persona_stats['bills_per_user'] = persona_stats['total_bills'] / persona_stats['unique_users']
+# # Tính trung bình mỗi người nạp bao nhiêu lần
+# persona_stats['bills_per_user'] = persona_stats['total_bills'] / persona_stats['unique_users']
 
-print(">>> Thống kê theo Persona:")
-print(persona_stats)
+# print(">>> Thống kê theo Persona:")
+# print(persona_stats)
