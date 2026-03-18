@@ -3,49 +3,80 @@
 ## 📜 Tài liệu Tư duy & Logic (Phần 1) : Hệ thống Giả lập Dữ liệu Người dùng (User Info Generator)
 ### 1. Tổng quan Tư duy (Philosophical Approach)
 Mục tiêu của hệ thống này không chỉ là tạo ra dữ liệu "đầy đủ các cột", mà là tạo ra Dữ liệu có ý nghĩa (Meaningful Data). Tư duy chủ đạo dựa trên 3 trụ cột:
-Tính thực tế (Realism): Dữ liệu phải phản ánh đúng đặc điểm nhân khẩu học của game thủ Việt Nam (họ, tên đệm, tỉ lệ giới tính, phân bổ vùng miền).
-Tính nhất quán (Consistency): Các trường thông tin phải có mối liên hệ logic (Ví dụ: Số CCCD phải khớp với giới tính, năm sinh và tỉnh thành).
-Tính duy nhất (Uniqueness): Đảm bảo không trùng lặp các trường định danh (Email, Phone, CCCD, UserID) để có thể nạp thẳng vào Database làm Khóa chính (Primary Key).
+
++ Tính thực tế (Realism): Dữ liệu phải phản ánh đúng đặc điểm nhân khẩu học của game thủ Việt Nam (họ, tên đệm, tỉ lệ giới tính, phân bổ vùng miền).
+
++ Tính nhất quán (Consistency): Các trường thông tin phải có mối liên hệ logic (Ví dụ: Số CCCD phải khớp với giới tính, năm sinh và tỉnh thành).
+
++ Tính duy nhất (Uniqueness): Đảm bảo không trùng lặp các trường định danh (Email, Phone, CCCD, UserID) để có thể nạp thẳng vào Database làm Khóa chính (Primary Key).
+
 ### 2. Logic triển khai chi tiết
 #### A. Nhân khẩu học & Tên gọi (Naming Logic)
 Hệ thống không sử dụng thư viện Faker thông thường nhằm tránh tạo ra các tên "vô nghĩa". Thay vào đó, nó sử dụng Trọng số thực tế:
-Họ (Surnames): Áp dụng tỉ lệ phân bổ họ tại Việt Nam (Nguyễn ~38%, Trần ~12%,...). Có cơ chế xử lý nhóm họ hiếm (Quách, Tiêu, Doãn...) để tăng độ đa dạng.
-Tên đệm & Tên chính: Phân tách theo giới tính (Male/Female).
-Username & Email: Được sinh ra từ chính tên thật không dấu, kết hợp với năm sinh hoặc nickname đặc trưng của game thủ (ví dụ: langtu, pro, knight), mô phỏng hành vi đặt tên tài khoản thực tế.
+
++ Họ (Surnames): Áp dụng tỉ lệ phân bổ họ tại Việt Nam (Nguyễn ~38%, Trần ~12%,...). Có cơ chế xử lý nhóm họ hiếm (Quách, Tiêu, Doãn...) để tăng độ đa dạng.
+
++ Tên đệm & Tên chính: Phân tách theo giới tính (Male/Female).
+
++ Username & Email: Được sinh ra từ chính tên thật không dấu, kết hợp với năm sinh hoặc nickname đặc trưng của game thủ (ví dụ: langtu, pro, knight), mô phỏng hành vi đặt tên tài khoản thực tế.
 #### B. Logic định danh CCCD (CCCD Integrity)
 Đây là phần logic phức tạp nhất, tuân thủ theo quy định của pháp luật Việt Nam:
-3 số đầu: Mã tỉnh thành (khớp với trường province).
-Số thứ 4: Mã giới tính kết hợp thế kỷ sinh (19xx: Nam 0, Nữ 1; 20xx: Nam 2, Nữ 3).
-2 số tiếp theo: 2 số cuối của năm sinh (khớp với trường birthday).
-6 số cuối: Số ngẫu nhiên duy nhất.
+
++ 3 số đầu: Mã tỉnh thành (khớp với trường province).
+
++ Số thứ 4: Mã giới tính kết hợp thế kỷ sinh (19xx: Nam 0, Nữ 1; 20xx: Nam 2, Nữ 3).
+
++ 2 số tiếp theo: 2 số cuối của năm sinh (khớp với trường birthday).
+
++ 6 số cuối: Số ngẫu nhiên duy nhất.
+
 #### C. Phân bổ Nhóm tuổi & Nghề nghiệp (Age & Job Distribution)
+
 Hệ thống sử dụng Trọng số phân cụm (Weighted Clustering):
-Độ tuổi: Tập trung mạnh vào nhóm 26-30 (40%) và 20-25 (20%) - đây là "độ tuổi vàng" của người chơi game có khả năng tài chính.
-Nghề nghiệp: Gắn liền với độ tuổi. Nếu age <= 22, hệ thống ưu tiên gán nhãn "Sinh viên". Các nghề nghiệp khác được gán dựa trên trọng số phổ biến (Nhân viên văn phòng, Kinh doanh tự do chiếm tỉ lệ cao).
+
++ Độ tuổi: Tập trung mạnh vào nhóm 26-30 (40%) và 20-25 (20%) - đây là "độ tuổi vàng" của người chơi game có khả năng tài chính.
+
++ Nghề nghiệp: Gắn liền với độ tuổi. Nếu age <= 22, hệ thống ưu tiên gán nhãn "Sinh viên". Các nghề nghiệp khác được gán dựa trên trọng số phổ biến (Nhân viên văn phòng, Kinh doanh tự do chiếm tỉ lệ cao).
+
 #### D. Logic địa lý (Location Logic)
+
 Sử dụng danh sách 63 tỉnh thành Việt Nam làm gốc.
-Địa chỉ: Được kết hợp giữa số nhà ngẫu nhiên + Tên đường phổ biến (Lê Lợi, Nguyễn Huệ...) + Tên tỉnh đã chọn, tạo cảm giác địa chỉ thực.
+
++ Địa chỉ: Được kết hợp giữa số nhà ngẫu nhiên + Tên đường phổ biến (Lê Lợi, Nguyễn Huệ...) + Tên tỉnh đã chọn, tạo cảm giác địa chỉ thực.
+
 ### 3. Quy trình xử lý dữ liệu (Data Pipeline)
 
 ![Sơ đồ Pipeline xử lý dữ liệu](https://raw.githubusercontent.com/Tdpro1612/gamer-management-system/main/data/icon/pipeline_processingdata.jpg)
 
-Giai đoạn Khởi tạo (Generation): Sử dụng vòng lặp while kết hợp với các bộ lưu trữ tạm (set) để kiểm tra trùng lặp ngay lập tức (used_emails, used_phones,...).
-Giai đoạn Làm sạch (Cleaning):
++ Giai đoạn Khởi tạo (Generation): Sử dụng vòng lặp while kết hợp với các bộ lưu trữ tạm (set) để kiểm tra trùng lặp ngay lập tức (used_emails, used_phones,...).
+
++ Giai đoạn Làm sạch (Cleaning):
+
 Sử dụng pandas để gộp các phần dữ liệu (Part 1, Part 2).
+
 Thực hiện drop_duplicates trên 5 lớp định danh khác nhau.
+
 Chuẩn hóa định dạng (Padding số 0 cho Phone đủ 10 số, CCCD đủ 12 số).
-Giai đoạn Lưu trữ (Storage):
+
++ Giai đoạn Lưu trữ (Storage):
+
 Xuất file .csv để phân tích dữ liệu lớn.
+
 Xuất file .json với cấu trúc Key-Value (Key là user_id) để tối ưu hóa việc truy xuất (Look-up) cho các module khác trong hệ thống CSKH.
+
 ### 4. Thông số kỹ thuật
-Ngôn ngữ: Python 3.x
-Thư viện chính: pandas, random, unicodedata, json.
-Cấu trúc ID: 20226 + 10 số ngẫu nhiên (Mô phỏng ID hệ thống quản lý tập trung).
-Email Domains: Hỗ trợ đa dạng từ quốc tế (Gmail, Yahoo) đến nội địa (vnn.vn, fpt.edu.vn).
++ Ngôn ngữ: Python 3.x
+
++ Thư viện chính: pandas, random, unicodedata, json.
+
++ Cấu trúc ID: 20226 + 10 số ngẫu nhiên (Mô phỏng ID hệ thống quản lý tập trung).
+
++ Email Domains: Hỗ trợ đa dạng từ quốc tế (Gmail, Yahoo) đến nội địa (vnn.vn, fpt.edu.vn).
+
 ### 5. Kết luận
+
 Bộ generator này không chỉ tạo ra các dòng dữ liệu phẳng, mà nó tạo ra một Hệ sinh thái người dùng có mối liên kết logic chặt chẽ, phục vụ tốt cho việc kiểm thử các tính năng tìm kiếm, phân loại VIP và truy vết thông tin trong hệ thống Game Management.
 
-Dưới đây là file `README.md` tập trung vào tư duy thuật toán và logic phân bổ người dùng vào các hệ thống game khác nhau (User-to-Game Allocation).
 
 ---
 
@@ -278,8 +309,8 @@ Sau khi chạy script này, bạn sẽ nhận được file `game_data.db`. Bạ
 2.  **Truy vết (Audit):** Tìm kiếm toàn bộ hành vi của một "Whale" từ lúc tạo tài khoản đến khi nhảy server và nạp gói Đua Top cuối cùng.
 
 ---
-#### 🏁 Kết thúc chuỗi Pipeline Dữ liệu
-Bạn đã hoàn thành hệ thống từ **Sinh dữ liệu Persona -> Phân bổ Server -> Giả lập Giao dịch -> Đóng gói Database**. 
+## 🏁 Kết thúc chuỗi Pipeline Dữ liệu
+Bạn đã hoàn thành hệ thống từ **Sinh dữ liệu userinfo -> Phân bổ user vào game-> Gán Persona -> Phân bổ Server -> Giả lập Giao dịch -> Đóng gói Database**. 
 
 
 ---
